@@ -427,6 +427,7 @@ class PipelineOrchestrator:
             relationships = []
             if i > 0:
                 from deepcut.models.clip import ClipRelationship
+                prev_plan = clip_plans[i - 1]
                 relationships.append(
                     ClipRelationship(
                         related_index=i - 1,
@@ -434,11 +435,19 @@ class PipelineOrchestrator:
                     )
                 )
                 # 检查是否同场景
-                if clip_plans[i - 1].scene_group == plan.scene_group:
+                if prev_plan.scene_group == plan.scene_group:
                     relationships.append(
                         ClipRelationship(
                             related_index=i - 1,
                             relationship_type="same_scene",
+                        )
+                    )
+                # 检查语义承接（有人声视频：相邻切片都有话题时标记）
+                if plan.topic and prev_plan.topic:
+                    relationships.append(
+                        ClipRelationship(
+                            related_index=i - 1,
+                            relationship_type="context_continuation",
                         )
                     )
 
