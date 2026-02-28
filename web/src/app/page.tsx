@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Scissors } from "lucide-react";
+import { Scissors, Settings } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UploadZone } from "@/components/upload-zone";
@@ -33,6 +33,11 @@ export default async function HomePage() {
           <Scissors className="h-5 w-5 text-primary" />
           <h1 className="text-lg font-semibold">DeepCut</h1>
           <span className="text-sm text-muted-foreground">智能短视频切片</span>
+          <div className="ml-auto">
+            <a href="/settings">
+              <Settings className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
+            </a>
+          </div>
         </div>
       </header>
 
