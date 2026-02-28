@@ -4,6 +4,9 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UploadZone } from "@/components/upload-zone";
 import { ProjectList } from "@/components/project-list";
+import { GlobalClipSearch } from "@/components/global-clip-search";
+import { HomeTabs } from "@/components/home-tabs";
+import { getAllTags } from "@/lib/actions";
 
 function ProjectListSkeleton() {
   return (
@@ -19,7 +22,9 @@ function ProjectListSkeleton() {
   );
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const allTags = await getAllTags();
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -40,13 +45,15 @@ export default function HomePage() {
 
         <Separator />
 
-        {/* 项目列表 */}
-        <section>
-          <h2 className="text-sm font-medium text-muted-foreground mb-3">项目列表</h2>
-          <Suspense fallback={<ProjectListSkeleton />}>
-            <ProjectList />
-          </Suspense>
-        </section>
+        {/* 双 Tab: 按项目 / 全局片段库 */}
+        <HomeTabs
+          projectsTab={
+            <Suspense fallback={<ProjectListSkeleton />}>
+              <ProjectList />
+            </Suspense>
+          }
+          clipsTab={<GlobalClipSearch allTags={allTags} />}
+        />
       </main>
     </div>
   );
