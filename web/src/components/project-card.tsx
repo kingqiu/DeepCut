@@ -94,66 +94,68 @@ export function ProjectCard({
 
   return (
     <Link href={`/projects/${id}`}>
-      <Card className={`group cursor-pointer overflow-hidden transition-shadow hover:shadow-md ${
-        isActive ? "ring-2 ring-primary/20" : ""
+      <Card className={`group cursor-pointer overflow-hidden transition-all duration-200 hover:shadow-xl hover:-translate-y-1 ${
+        isActive ? "ring-2 ring-primary/30 shadow-lg" : "hover:shadow-lg"
       }`}>
         {/* 缩略图区域 */}
-        <div className="relative aspect-video bg-muted">
+        <div className="relative aspect-video bg-muted overflow-hidden">
           {status === "completed" && thumbnailUrl ? (
             <img
               src={thumbnailUrl}
               alt={name}
               width={640}
               height={360}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : isActive ? (
-            <div className="flex h-full flex-col items-center justify-center gap-2">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-xs text-muted-foreground">
+            <div className="flex h-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-primary/5 to-primary/10">
+              <div className="rounded-full bg-primary/10 p-3">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              </div>
+              <p className="text-sm font-medium text-foreground">
                 {status === "pending" ? "排队中…" : "正在切片…"}
               </p>
-              <p className="text-xs font-mono text-muted-foreground/60">
+              <p className="text-xs font-mono text-muted-foreground">
                 {formatElapsed(elapsedLive)}
               </p>
             </div>
           ) : (
-            <div className="flex h-full items-center justify-center">
-              <Film className="h-10 w-10 text-muted-foreground/40" />
+            <div className="flex h-full items-center justify-center bg-muted">
+              <Film className="h-12 w-12 text-muted-foreground/30" />
             </div>
           )}
           <Badge
             variant={statusConf.variant}
-            className="absolute right-2 top-2 gap-1"
+            className="absolute right-3 top-3 gap-1.5 shadow-md font-medium"
           >
             {statusConf.icon}
             {PROJECT_STATUS_LABELS[status]}
           </Badge>
         </div>
 
-        <CardContent className="p-3">
-          <h3 className="truncate text-sm font-medium group-hover:text-primary">
+        <CardContent className="p-4">
+          <h3 className="truncate text-base font-semibold group-hover:text-primary transition-colors">
             {name}
           </h3>
-          <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
             {status === "completed" && (
               <>
-                <span className="flex items-center gap-1">
-                  <Scissors className="h-3 w-3" />
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Scissors className="h-3.5 w-3.5 text-primary" />
                   {totalClips} 切片
                 </span>
                 {elapsed != null && (
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
+                  <span className="flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5" />
                     {formatElapsed(elapsed)}
                   </span>
                 )}
               </>
             )}
             {status === "failed" && (
-              <span className="text-destructive">处理失败</span>
+              <span className="text-destructive font-medium">处理失败</span>
             )}
-            <span className="ml-auto">
+            <span className="ml-auto text-muted-foreground/80">
               {new Date(createdAt).toLocaleDateString("zh-CN", {
                 month: "short",
                 day: "numeric",

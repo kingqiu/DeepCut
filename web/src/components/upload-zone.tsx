@@ -136,10 +136,10 @@ export function UploadZone() {
 
           <TabsContent value="upload" className="mt-4">
             <div
-              className={`relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors ${
+              className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-16 transition-all ${
                 isDragging
-                  ? "border-primary bg-primary/5"
-                  : "border-muted-foreground/25 hover:border-primary/50"
+                  ? "border-primary bg-primary/10 shadow-lg scale-[1.02]"
+                  : "border-border hover:border-primary/50 hover:bg-accent/50"
               }`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -147,23 +147,30 @@ export function UploadZone() {
             >
               {uploading ? (
                 <div className="flex flex-col items-center w-full max-w-xs">
-                  <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                  <p className="mt-3 text-sm text-muted-foreground">上传中...</p>
-                  <Progress value={uploadProgress} className="mt-3 w-full" />
-                  <p className="mt-1 text-xs text-muted-foreground/60">{uploadProgress}%</p>
+                  <div className="rounded-full bg-primary/10 p-4">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                  </div>
+                  <p className="mt-4 text-base font-medium text-foreground">上传中...</p>
+                  <Progress value={uploadProgress} className="mt-4 w-full h-2" />
+                  <p className="mt-2 text-sm font-medium text-primary">{uploadProgress}%</p>
                 </div>
               ) : (
                 <>
-                  <Film className="h-10 w-10 text-muted-foreground" />
-                  <p className="mt-3 text-sm text-muted-foreground">
+                  <div className="rounded-full bg-primary/10 p-6">
+                    <Upload className="h-12 w-12 text-primary" />
+                  </div>
+                  <p className="mt-6 text-base font-medium text-foreground">
                     拖拽视频文件到这里，或点击选择
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground/60">
-                    支持 MP4/MKV/AVI/MOV，最大 500MB
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    支持 MP4/MKV/AVI/MOV 等格式，最大 500MB
                   </p>
-                  <label htmlFor="video-upload" className="mt-4 cursor-pointer">
-                    <Button variant="outline" size="sm" asChild>
-                      <span>选择文件</span>
+                  <label htmlFor="video-upload" className="mt-6 cursor-pointer">
+                    <Button size="lg" className="shadow-md hover:shadow-lg transition-shadow" asChild>
+                      <span className="flex items-center gap-2">
+                        <Film className="h-4 w-4" />
+                        选择文件
+                      </span>
                     </Button>
                     <input
                       id="video-upload"

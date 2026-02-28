@@ -7,6 +7,7 @@ import { UploadZone } from "@/components/upload-zone";
 import { ProjectList } from "@/components/project-list";
 import { GlobalClipSearch } from "@/components/global-clip-search";
 import { HomeTabs } from "@/components/home-tabs";
+import { StatsOverview } from "@/components/stats-overview";
 
 function ProjectListSkeleton() {
   return (
@@ -26,23 +27,42 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b">
-        <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-4">
-          <Scissors className="h-5 w-5 text-primary" />
-          <h1 className="text-lg font-semibold">DeepCut</h1>
-          <span className="text-sm text-muted-foreground">智能短视频切片</span>
+      <header className="border-b bg-card shadow-sm">
+        <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-6">
+          <div className="flex items-center gap-2">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <Scissors className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-foreground">DeepCut</h1>
+              <p className="text-xs text-muted-foreground">智能短视频切片系统</p>
+            </div>
+          </div>
           <div className="ml-auto">
-            <Link href="/settings" aria-label="设置">
-              <Settings className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
+            <Link
+              href="/settings"
+              aria-label="设置"
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">设置</span>
             </Link>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-6 space-y-6">
+      <main className="mx-auto max-w-7xl px-6 py-8 space-y-8">
+        {/* 统计概览 */}
+        <section>
+          <h2 className="text-lg font-semibold text-foreground mb-4">数据概览</h2>
+          <StatsOverview />
+        </section>
+
+        <Separator />
+
         {/* 视频输入区 */}
         <section>
-          <h2 className="text-sm font-medium text-muted-foreground mb-3">新建切片任务</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-4">新建切片任务</h2>
           <UploadZone />
         </section>
 
