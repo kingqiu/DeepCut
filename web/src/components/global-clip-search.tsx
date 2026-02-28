@@ -12,7 +12,7 @@ import {
   TAG_DIMENSION_LABELS,
   type TagDimension,
 } from "@/types";
-import { searchClips } from "@/lib/actions";
+// import { searchClips } from "@/lib/actions"; // 改用 API 路由
 
 interface ClipResult {
   id: string;
@@ -69,15 +69,35 @@ export function GlobalClipSearch({}: GlobalClipSearchProps) {
           if (vals.size > 0) dimensions[dim] = Array.from(vals);
         }
 
-        const result = await searchClips({
-          keyword: kw || undefined,
-          dimensions: Object.keys(dimensions).length > 0 ? dimensions : undefined,
-          limit: 40,
-        });
+        try {
+          const res = await fetch("/api/clips/search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              keyword: kw || undefined,
+              dimensions: Object.keys(dimensions).length > 0 ? dimensions : undefined,
+              limit: 40,
+            }),
+          });
 
-        setClips(result.clips);
-        setTotal(result.total);
-        setSearched(true);
+          if (!res.ok) {
+            console.error("Search failed:", res.statusText);
+            setClips([]);
+            setTotal(0);
+            setSearched(true);
+            return;
+          }
+
+          const result = await res.json();
+          setClips(result.clips);
+          setTotal(result.total);
+          setSearched(true);
+        } catch (error) {
+          console.error("Search error:", error);
+          setClips([]);
+          setTotal(0);
+          setSearched(true);
+        }
       });
     },
     []
