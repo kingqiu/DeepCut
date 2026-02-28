@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useTransition } from "react";
+import { useState, useCallback, useTransition, useEffect } from "react";
 import Link from "next/link";
 import { Search, X, Play, Download, Clock, Film } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,7 @@ import {
   TAG_DIMENSION_LABELS,
   type TagDimension,
 } from "@/types";
-import { searchClips } from "@/lib/actions";
+import { searchClips, getAllTags } from "@/lib/actions";
 
 interface ClipResult {
   id: string;
@@ -30,9 +30,7 @@ interface ClipResult {
   tags: Array<{ dimension: string; value: string }>;
 }
 
-interface GlobalClipSearchProps {
-  allTags: Record<string, string[]>;
-}
+interface GlobalClipSearchProps {}
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -40,13 +38,19 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export function GlobalClipSearch({ allTags }: GlobalClipSearchProps) {
+export function GlobalClipSearch({}: GlobalClipSearchProps) {
+  const [allTags, setAllTags] = useState<Record<string, string[]>>({});
   const [keyword, setKeyword] = useState("");
   const [selectedTags, setSelectedTags] = useState<Record<string, Set<string>>>({});
   const [clips, setClips] = useState<ClipResult[]>([]);
   const [total, setTotal] = useState(0);
   const [searched, setSearched] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  // 加载所有标签
+  useEffect(() => {
+    getAllTags().then(setAllTags);
+  }, []);
 
   const doSearch = useCallback(
     (kw: string, tags: Record<string, Set<string>>) => {

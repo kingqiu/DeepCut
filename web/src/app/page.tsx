@@ -7,7 +7,6 @@ import { UploadZone } from "@/components/upload-zone";
 import { ProjectList } from "@/components/project-list";
 import { GlobalClipSearch } from "@/components/global-clip-search";
 import { HomeTabs } from "@/components/home-tabs";
-import { getAllTags } from "@/lib/actions";
 
 function ProjectListSkeleton() {
   return (
@@ -23,9 +22,7 @@ function ProjectListSkeleton() {
   );
 }
 
-export default async function HomePage() {
-  const allTags = await getAllTags();
-
+export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -58,7 +55,7 @@ export default async function HomePage() {
               <ProjectList />
             </Suspense>
           }
-          clipsTab={<GlobalClipSearch allTags={allTags} />}
+          clipsTab={<GlobalClipSearch />}
         />
       </main>
     </div>
