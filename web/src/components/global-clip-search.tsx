@@ -71,23 +71,21 @@ export function GlobalClipSearch({ allTags }: GlobalClipSearchProps) {
   );
 
   function toggleTag(dimension: string, value: string) {
-    setSelectedTags((prev) => {
-      const next = { ...prev };
-      if (!next[dimension]) next[dimension] = new Set();
-      const set = new Set(next[dimension]);
-      if (set.has(value)) {
-        set.delete(value);
-      } else {
-        set.add(value);
-      }
-      if (set.size === 0) {
-        delete next[dimension];
-      } else {
-        next[dimension] = set;
-      }
-      doSearch(keyword, next);
-      return next;
-    });
+    const nextTags = { ...selectedTags };
+    if (!nextTags[dimension]) nextTags[dimension] = new Set();
+    const set = new Set(nextTags[dimension]);
+    if (set.has(value)) {
+      set.delete(value);
+    } else {
+      set.add(value);
+    }
+    if (set.size === 0) {
+      delete nextTags[dimension];
+    } else {
+      nextTags[dimension] = set;
+    }
+    setSelectedTags(nextTags);
+    doSearch(keyword, nextTags);
   }
 
   function clearAll() {
