@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SourceType {
+  upload
+  url
+  local_watch
+}
+
+enum ProjectStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+model Project {
+  id         String        @id @default(cuid())
+  name       String
+  source     SourceType
+  sourcePath String
+  status     ProjectStatus @default(pending)
+  error      String?
+  videoMeta  Json?
+  versionDir String?
+  totalClips Int           @default(0)
+  elapsed    Float?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  clips      Clip[]
+  watchDir   WatchDir?     @relation(fields: [watchDirId], references: [id])
+  watchDirId String?
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Clip {
+  id             String   @id @default(cuid())
+  projectId      String
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  index          Int
+  start          Float
+  end            Float
+  duration       Float
+  fileName       String
+  filePath       String
+  thumbnailPath  String
+  splitReason    String
+  sceneGroup     Int      @default(0)
+  orientation    String   @default("landscape")
+  transcriptText String   @default("")
+  topic          String   @default("")
+  summary        String   @default("")
+  createdAt      DateTime @default(now())
+
+  tags           ClipTag[]
+  relationships  ClipRelationship[]
+
+  @@index([projectId])
+  @@index([topic])
+}
+
+model ClipTag {
+  id        String @id @default(cuid())
+  clipId    String
+  clip      Clip   @relation(fields: [clipId], references: [id], onDelete: Cascade)
+  dimension String
+  value     String
+
+  @@index([dimension, value])
+  @@index([clipId])
+}
+
+model ClipRelationship {
+  id               String @id @default(cuid())
+  clipId           String
+  clip             Clip   @relation(fields: [clipId], references: [id], onDelete: Cascade)
+  relatedClipIndex Int
+  relationshipType String
+
+  @@index([clipId])
+}
+
+model WatchDir {
+  id             String    @id @default(cuid())
+  path           String    @unique
+  enabled        Boolean   @default(true)
+  interval       Int       @default(600)
+  processedFiles String[]  @default([])
+  lastScan       DateTime?
+  createdAt      DateTime  @default(now())
+
+  projects       Project[]
+}
