@@ -49,25 +49,21 @@ export function StatsOverview() {
     {
       label: "总项目",
       value: stats.totalProjects,
-      trend: "+14",
       bars: generateBars(15, stats.totalProjects),
     },
     {
       label: "处理中",
       value: stats.processing,
-      trend: "",
       bars: generateBars(15, stats.processing),
     },
     {
       label: "已完成",
       value: stats.completed,
-      trend: "+3",
       bars: generateBars(15, stats.completed),
     },
     {
       label: "切片总数",
       value: stats.totalClips,
-      trend: "",
       bars: generateBars(15, stats.totalClips),
     },
   ];
@@ -80,15 +76,10 @@ export function StatsOverview() {
           className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-background to-muted/30 p-6 transition-all hover:shadow-lg hover:-translate-y-1"
         >
           {/* 标签 */}
-          <div className="mb-2 flex items-center gap-2">
+          <div className="mb-2">
             <span className="text-xs font-medium text-muted-foreground">
               {stat.label}
             </span>
-            {stat.trend && (
-              <span className="text-xs font-semibold text-primary">
-                {stat.trend}
-              </span>
-            )}
           </div>
 
           {/* 大数字 */}
