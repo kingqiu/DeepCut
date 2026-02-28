@@ -12,7 +12,7 @@ import {
   TAG_DIMENSION_LABELS,
   type TagDimension,
 } from "@/types";
-import { searchClips, getAllTags } from "@/lib/actions";
+import { searchClips } from "@/lib/actions";
 
 interface ClipResult {
   id: string;
@@ -49,7 +49,16 @@ export function GlobalClipSearch({}: GlobalClipSearchProps) {
 
   // 加载所有标签
   useEffect(() => {
-    getAllTags().then(setAllTags);
+    fetch("/api/tags")
+      .then((res) => res.json())
+      .then((tags: Record<string, string[]>) => {
+        console.log("Loaded tags:", tags);
+        setAllTags(tags);
+      })
+      .catch((error: Error) => {
+        console.error("Failed to load tags:", error);
+        setAllTags({});
+      });
   }, []);
 
   const doSearch = useCallback(
