@@ -1,0 +1,165 @@
+# DeepCut - 智能短视频切片系统 开发规范
+
+> 混合架构：Python 切片引擎（MVP）+ Next.js Web 层（第二阶段）
+
+## 技术栈
+
+### Python 切片引擎（engine/）★ MVP
+- **语言**: Python 3.11+，类型标注必须（mypy strict 兼容）
+- **数据模型**: Pydantic v2（所有输入输出必须有模型定义）
+- **视频处理**: FFmpeg (subprocess 调用)
+- **场景检测**: PySceneDetect
+- **运镜检测**: OpenCV (光流分析)
+- **人声检测**: Silero VAD
+- **语音转录**: faster-whisper（本地模型）
+- **LLM**: OpenAI GPT-4o / DashScope（话题分段 + 标签生成）
+- **CLI**: Typer
+- **日志**: Loguru
+- **测试**: Pytest
+
+### Next.js Web 层（web/）第二阶段
+- **框架**: Next.js 14+ (App Router)
+- **语言**: TypeScript (strict mode)
+- **样式**: Tailwind CSS 4 + shadcn/ui
+- **图标**: Lucide React
+- **状态管理**: Zustand
+- **数据库**: PostgreSQL + Prisma ORM
+- **队列**: BullMQ + Redis (异步任务)
+- **视频处理**: 调用 Python Engine (FastAPI HTTP)
+
+## 项目结构约定
+
+```
+DeepCut/
+├── engine/                          # Python 切片引擎 ★ MVP
+│   ├── deepcut/
+│   │   ├── cli.py                   # CLI 入口
+│   │   ├── config.py                # 全局配置 (Pydantic Settings)
+│   │   ├── pipeline/                # 7 步流水线
+│   │   │   ├── orchestrator.py      # 流水线编排
+│   │   │   ├── step1_preprocess.py
+│   │   │   ├── step2_vad.py
+│   │   │   ├── step3a_speech_analysis.py
+│   │   │   ├── step3b_visual_analysis.py
+│   │   │   ├── step4_fusion.py
+│   │   │   ├── step5_cut.py
+│   │   │   ├── step6_tagging.py
+│   │   │   └── step7_output.py
+│   │   ├── analyzers/               # 检测模块
+│   │   ├── fusion/                  # 融合决策引擎
+│   │   ├── ai/                      # LLM 服务封装
+│   │   ├── video/                   # FFmpeg 封装
+│   │   ├── models/                  # Pydantic 数据模型
+│   │   └── utils/                   # 工具函数
+│   ├── api/                         # FastAPI 服务（第二阶段）
+│   └── tests/
+│
+├── web/                             # Next.js Web 层（第二阶段）
+│   └── src/
+│       ├── app/
+│       ├── components/
+│       ├── lib/
+│       ├── hooks/
+│       ├── types/
+│       └── utils/
+│
+└── test-data/                       # 测试视频
+```
+
+## Python 编码规范
+
+### 类型与模型
+- 所有函数必须有类型标注（参数 + 返回值）
+- 禁止使用 `Any`，必须用具体类型
+- 所有数据传递使用 Pydantic BaseModel，不用裸 dict
+- 使用 `Literal` 约束字符串枚举值
+- 使用 `Path` 类型处理文件路径
+
+### 模块设计
+- 每个分析器（analyzer）是独立类，可单独实例化和测试
+- 融合策略使用策略模式（ABC 基类 + 具体策略子类）
+- Pipeline 步骤之间通过 Pydantic 模型传递数据
+- 模块间无环形依赖，依赖方向：pipeline → analyzers/fusion/ai → models/utils
+
+### 错误处理
+- 使用自定义异常类层级（DeepCutError → AnalysisError, FFmpegError, LLMError 等）
+- FFmpeg 调用必须检查返回码，失败时记录完整 stderr
+- 文件操作必须使用 `with` 上下文管理器
+- 临时文件（提取的音频等）处理完成后必须清理
+
+### 日志规范
+- 使用 loguru，不用 stdlib logging
+- 每个 pipeline 步骤开始/结束时打印日志（含耗时）
+- 日志格式：`[Step N/7] 步骤名称 - 详情`
+- LLM 调用记录 token 消耗与延迟
+
+### 测试规范
+- 每个 analyzer 模块必须有独立单元测试
+- 融合策略必须有用模拟数据的测试
+- 端到端测试覆盖三种场景：有人声/无人声/混合
+- 测试视频路径通过 conftest.py fixture 提供
+
+## AI/LLM 调用规范（Python engine/deepcut/ai/）
+
+- 所有 LLM 调用必须封装在 `deepcut/ai/` 下，pipeline 步骤不直接调用 OpenAI SDK
+- 必须实现指数退避重试（最多 3 次）
+- 超时设置：普通调用 30s，长分析 120s
+- API Key 通过环境变量注入（`OPENAI_API_KEY` / `DASHSCOPE_API_KEY`），禁止硬编码
+- 每次调用记录 token 消耗与延迟指标（loguru 日志）
+- Prompt 模板与业务逻辑分离，放在 `deepcut/ai/prompts/` 目录
+
+## TypeScript 编码规范（web/ 第二阶段）
+
+### TypeScript
+- 启用 `strict: true`，禁止使用 `any`，必须显式标注函数返回类型
+- 使用 `interface` 定义对象形状，使用 `type` 定义联合/交叉/工具类型
+- 所有 API 请求和响应必须有对应的类型定义
+- 枚举使用 `as const` 对象替代 `enum`
+
+### React / Next.js
+- 默认使用 Server Components，仅在需要交互时标注 `'use client'`
+- 数据获取优先使用 Server Actions 或 Route Handlers
+- 组件文件名使用 PascalCase，工具函数使用 camelCase
+- 每个组件文件只导出一个组件
+- Props 类型命名：`{ComponentName}Props`
+
+### Tailwind CSS
+- 禁止内联 `style`，所有样式通过 Tailwind class 实现
+- 使用 `cn()` 工具函数 (clsx + tailwind-merge) 合并条件类名
+- 响应式设计：移动优先 (sm → md → lg → xl)
+- 颜色使用 CSS 变量 / Tailwind 主题色，禁止硬编码色值
+
+## 文件与存储
+
+### MVP（本地文件系统）
+- 切片输出到视频所在目录的 `deepcut_output/` 子目录
+- 每次切片独立版本目录：`deepcut_output/v{N}_{timestamp}/`
+- 版本目录内结构：`clips/*.mp4` + `metadata.json` + `transcript.json`
+- 临时文件（提取的音频、中间数据）处理完成后必须清理
+- 帧级分析数据不持久化（节省空间），语音转录结果持久化
+
+### Web 阶段
+- 原始视频与切片结果分目录存储
+- 上传视频最大限制 2GB，支持分片上传
+- 文件命名格式: `{userId}/{videoId}/{type}/{filename}`
+
+## Git 约定
+
+- 分支命名: `feat/xxx`, `fix/xxx`, `refactor/xxx`
+- Commit 信息: 使用中文，格式 `<type>: <description>`
+  - 示例: `feat: 实现场景检测器`
+- PR 必须包含变更说明与测试结果
+
+## 环境变量
+
+### Python Engine
+- 统一放在 `engine/.env`（本地开发）
+- 必需：`OPENAI_API_KEY`
+- 可选：`DASHSCOPE_API_KEY`, `WHISPER_MODEL`, `WHISPER_DEVICE`
+- 可选：`DEEPCUT_DEFAULT_MIN_DURATION`, `DEEPCUT_DEFAULT_MAX_DURATION`, `DEEPCUT_OVERLAP_DURATION`
+
+### Next.js Web
+- 统一放在 `web/.env.local`（本地开发）
+- `NEXT_PUBLIC_` 前缀仅用于客户端可访问变量
+- `PYTHON_ENGINE_URL` 指向 Python FastAPI 服务
+- 敏感 Key 禁止提交到版本控制
