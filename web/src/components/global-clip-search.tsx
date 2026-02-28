@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useTransition } from "react";
+import Link from "next/link";
 import { Search, X, Play, Download, Clock, Film } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -211,10 +212,13 @@ function GlobalClipCard({ clip }: { clip: ClipResult }) {
             <img
               src={thumbUrl}
               alt={clip.topic || `Clip ${clip.index}`}
+              width={640}
+              height={360}
               className="h-full w-full object-cover"
             />
             <button
               onClick={() => setShowVideo(true)}
+              aria-label="播放视频"
               className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity hover:opacity-100"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90">
@@ -230,12 +234,12 @@ function GlobalClipCard({ clip }: { clip: ClipResult }) {
 
       <CardContent className="p-3 space-y-2">
         {/* 来源项目 */}
-        <a
+        <Link
           href={`/projects/${clip.projectId}`}
           className="text-[10px] text-primary hover:underline truncate block"
         >
           {clip.projectName}
-        </a>
+        </Link>
 
         {/* 时间 + 话题 */}
         <div>

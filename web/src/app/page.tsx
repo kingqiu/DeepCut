@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { Scissors, Settings } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,9 +35,9 @@ export default async function HomePage() {
           <h1 className="text-lg font-semibold">DeepCut</h1>
           <span className="text-sm text-muted-foreground">智能短视频切片</span>
           <div className="ml-auto">
-            <a href="/settings">
+            <Link href="/settings" aria-label="设置">
               <Settings className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
-            </a>
+            </Link>
           </div>
         </div>
       </header>

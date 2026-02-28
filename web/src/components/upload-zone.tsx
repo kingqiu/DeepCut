@@ -80,7 +80,7 @@ export function UploadZone() {
       if (!res.ok) {
         setMessage({ type: "error", text: data.error || "上传失败" });
       } else {
-        setMessage({ type: "success", text: `${file.name} 已提交处理，正在切片中...` });
+        setMessage({ type: "success", text: `${file.name} 已提交处理，正在切片中…` });
         // 刷新 Server Component 数据让项目卡片出现
         router.refresh();
       }
@@ -108,7 +108,7 @@ export function UploadZone() {
       if (!res.ok) {
         setMessage({ type: "error", text: data.error || "提交失败" });
       } else {
-        setMessage({ type: "success", text: `${localPath.split("/").pop()} 已提交处理，正在切片中...` });
+        setMessage({ type: "success", text: `${localPath.split("/").pop()} 已提交处理，正在切片中…` });
         setLocalPath("");
         router.refresh();
       }
@@ -161,11 +161,12 @@ export function UploadZone() {
                   <p className="mt-1 text-xs text-muted-foreground/60">
                     支持 MP4/MKV/AVI/MOV，最大 500MB
                   </p>
-                  <label className="mt-4 cursor-pointer">
+                  <label htmlFor="video-upload" className="mt-4 cursor-pointer">
                     <Button variant="outline" size="sm" asChild>
                       <span>选择文件</span>
                     </Button>
                     <input
+                      id="video-upload"
                       type="file"
                       className="hidden"
                       accept="video/*"
@@ -184,6 +185,8 @@ export function UploadZone() {
               </p>
               <div className="flex gap-2">
                 <Input
+                  name="videoPath"
+                  autoComplete="off"
                   placeholder="/path/to/video.mp4"
                   value={localPath}
                   onChange={(e) => setLocalPath(e.target.value)}

@@ -173,10 +173,13 @@ function ClipCard({ projectId, clip }: { projectId: string; clip: ClipData }) {
             <img
               src={thumbUrl}
               alt={`Clip ${clip.index}`}
+              width={640}
+              height={360}
               className="h-full w-full object-cover"
             />
             <button
               onClick={() => setShowVideo(true)}
+              aria-label="播放视频"
               className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity hover:opacity-100"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90">

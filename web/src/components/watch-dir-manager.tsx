@@ -96,6 +96,8 @@ export function WatchDirManager() {
         <CardContent className="pt-4 space-y-3">
           <div className="flex gap-2">
             <Input
+              name="watchPath"
+              autoComplete="off"
               placeholder="/path/to/video/directory"
               value={newPath}
               onChange={(e) => setNewPath(e.target.value)}
@@ -105,6 +107,8 @@ export function WatchDirManager() {
             <div className="flex items-center gap-1.5 shrink-0">
               <Input
                 type="number"
+                name="scanInterval"
+                aria-label="扫描间隔（秒）"
                 className="w-24"
                 value={newInterval}
                 onChange={(e) => setNewInterval(Number(e.target.value))}
@@ -135,7 +139,12 @@ export function WatchDirManager() {
           {dirs.map((dir) => (
             <Card key={dir.id}>
               <CardContent className="flex items-center gap-3 py-3">
-                <button onClick={() => handleToggle(dir.id, dir.enabled)} className="shrink-0">
+                <button
+                  onClick={() => handleToggle(dir.id, dir.enabled)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleToggle(dir.id, dir.enabled)}
+                  aria-label={dir.enabled ? "禁用监听" : "启用监听"}
+                  className="shrink-0"
+                >
                   {dir.enabled ? (
                     <ToggleRight className="h-6 w-6 text-primary" />
                   ) : (
@@ -153,7 +162,7 @@ export function WatchDirManager() {
                       间隔:
                     </span>
                     <select
-                      className="text-[10px] border rounded px-1 py-0.5 bg-background"
+                      className="text-[10px] border rounded px-1 py-0.5 bg-background text-foreground"
                       value={dir.interval}
                       onChange={(e) => handleUpdateInterval(dir.id, Number(e.target.value))}
                     >
