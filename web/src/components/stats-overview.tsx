@@ -9,15 +9,16 @@ interface StatsData {
   totalClips: number;
 }
 
-// 生成随机高度的柱状图数据（模拟趋势）
-function generateBars(count: number, value: number) {
+// 生成确定性的柱状图数据（避免 Hydration 错误）
+function generateBars(count: number, value: number, seed: number) {
   const bars = [];
   for (let i = 0; i < count; i++) {
-    // 根据值生成不同高度，最后几个柱子稍高（表示增长趋势）
+    // 使用确定性算法生成高度，避免 Math.random()
     const baseHeight = value > 0 ? 20 : 10;
-    const variance = Math.random() * 30;
+    // 使用正弦波生成变化，基于索引和种子
+    const wave = Math.sin((i + seed) * 0.5) * 15 + 15;
     const trendBoost = i > count - 3 ? 15 : 0;
-    bars.push(baseHeight + variance + trendBoost);
+    bars.push(baseHeight + wave + trendBoost);
   }
   return bars;
 }
@@ -49,22 +50,22 @@ export function StatsOverview() {
     {
       label: "总项目",
       value: stats.totalProjects,
-      bars: generateBars(15, stats.totalProjects),
+      bars: generateBars(15, stats.totalProjects, 0),
     },
     {
       label: "处理中",
       value: stats.processing,
-      bars: generateBars(15, stats.processing),
+      bars: generateBars(15, stats.processing, 1),
     },
     {
       label: "已完成",
       value: stats.completed,
-      bars: generateBars(15, stats.completed),
+      bars: generateBars(15, stats.completed, 2),
     },
     {
       label: "切片总数",
       value: stats.totalClips,
-      bars: generateBars(15, stats.totalClips),
+      bars: generateBars(15, stats.totalClips, 3),
     },
   ];
 
