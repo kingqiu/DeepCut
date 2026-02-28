@@ -23,6 +23,7 @@ from deepcut.models.video import VideoInfo
 from deepcut.utils.logging import step_done, step_start
 from deepcut.utils.version import create_version_dir
 from deepcut.video.cutter import batch_cut
+from deepcut.video.extract import extract_frame
 from deepcut.video.extract import extract_audio
 from deepcut.video.probe import probe_video
 
@@ -101,7 +102,7 @@ class PipelineOrchestrator:
 
             # Step 7: 输出
             self._step7_output(
-                version_dir, video_info, clip_plans, clip_paths, analysis
+                version_dir, video_info, clip_plans, clip_paths, analysis, input_path
             )
 
         finally:
@@ -386,10 +387,27 @@ class PipelineOrchestrator:
         clip_plans: list[ClipPlan],
         clip_paths: list[Path],
         analysis: AnalysisResult,
+        video_path: Path,
     ) -> None:
-        """Step 7: 保存 metadata.json + transcript.json"""
+        """Step 7: 保存 metadata.json + transcript.json + thumbnails"""
         step_start(7, TOTAL_STEPS, "输出")
         t0 = time.monotonic()
+
+        # 生成缩略图
+        thumbnails_dir = version_dir / "thumbnails"
+        thumbnails_dir.mkdir(exist_ok=True)
+        thumbnail_names: dict[int, str] = {}
+        for i, plan in enumerate(clip_plans):
+            thumb_name = f"thumb_{i:03d}.jpg"
+            thumb_path = thumbnails_dir / thumb_name
+            mid_time = (plan.start + plan.end) / 2
+            try:
+                extract_frame(video_path, thumb_path, mid_time, width=480)
+                thumbnail_names[i] = f"thumbnails/{thumb_name}"
+            except Exception as e:
+                logger.warning(f"缩略图生成失败 clip_{i}: {e}")
+        if thumbnail_names:
+            logger.info(f"缩略图生成完成: {len(thumbnail_names)}/{len(clip_plans)} 张")
 
         # 构建 ClipMetadata 列表
         clips_metadata: list[ClipMetadata] = []
@@ -432,6 +450,7 @@ class PipelineOrchestrator:
                     duration=plan.duration,
                     file_name=file_name,
                     file_path=file_path,
+                    thumbnail=thumbnail_names.get(i, ""),
                     split_reason=plan.split_reason,
                     scene_group=plan.scene_group,
                     overlap_prev=plan.overlap_prev,

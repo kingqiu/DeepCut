@@ -66,6 +66,7 @@ class ClipMetadata(BaseModel):
     duration: float
     file_name: str
     file_path: Path | None = None
+    thumbnail: str = Field(default="", description="缩略图文件名（相对于版本目录）")
     split_reason: str
     scene_group: int = 0
     overlap_prev: float = 0.0
