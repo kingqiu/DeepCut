@@ -49,7 +49,13 @@ def _run_pipeline(job_id: str, req: JobCreateRequest) -> None:
         if req.max_duration != 60.0:
             config.deepcut_default_max_duration = req.max_duration
 
-        output_dir = Path(req.output_dir) if req.output_dir else None
+        # 输出目录：优先用请求指定的，否则用 STORAGE_ROOT/output/
+        if req.output_dir:
+            output_dir = Path(req.output_dir)
+        else:
+            output_dir = config.deepcut_storage_root / "output"
+
+        project_id = req.project_id or None
 
         orchestrator = PipelineOrchestrator(
             config=config,
@@ -58,7 +64,11 @@ def _run_pipeline(job_id: str, req: JobCreateRequest) -> None:
         )
 
         job_store.update(job_id, progress="流水线运行中")
-        version_dir = orchestrator.run(Path(req.video_path), output_dir=output_dir)
+        version_dir = orchestrator.run(
+            Path(req.video_path),
+            output_dir=output_dir,
+            project_id=project_id,
+        )
 
         # 读取 metadata 获取切片数
         metadata_path = version_dir / "metadata.json"

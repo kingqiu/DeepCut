@@ -57,12 +57,14 @@ class PipelineOrchestrator:
         self,
         input_path: Path,
         output_dir: Path | None = None,
+        project_id: str | None = None,
     ) -> Path:
         """执行完整 pipeline
 
         Args:
             input_path: 输入视频路径
             output_dir: 输出目录（可选）
+            project_id: Web 项目 ID（可选，用于统一存储路径）
 
         Returns:
             版本目录路径
@@ -76,7 +78,7 @@ class PipelineOrchestrator:
         logger.info(f"{'=' * 60}")
 
         # 创建版本目录
-        version_dir = create_version_dir(input_path, output_dir)
+        version_dir = create_version_dir(input_path, output_dir, project_id=project_id)
         logger.info(f"输出目录: {version_dir}")
 
         audio_path: Path | None = None

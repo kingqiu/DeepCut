@@ -28,6 +28,9 @@ class DeepCutConfig(BaseSettings):
     whisper_device: Literal["cpu", "cuda"] = "cpu"
     whisper_compute_type: Literal["float16", "int8"] = "int8"
 
+    # --- 存储 ---
+    deepcut_storage_root: Path = Path.home() / "deepcut-data"
+
     # --- 切片引擎 ---
     deepcut_default_min_duration: float = 15.0
     deepcut_default_max_duration: float = 60.0

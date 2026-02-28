@@ -3,8 +3,7 @@ import { writeFile, mkdir, access } from "fs/promises";
 import { join } from "path";
 import { prisma } from "@/lib/prisma";
 import { processQueue, type ProcessJobData } from "@/lib/queue";
-
-const UPLOAD_DIR = process.env.UPLOAD_DIR ?? "/tmp/deepcut_uploads";
+import { UPLOADS_DIR } from "@/lib/storage";
 const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -35,23 +34,30 @@ async function handleFileUpload(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    await mkdir(UPLOAD_DIR, { recursive: true });
-
-    const timestamp = Date.now();
-    const safeName = file.name.replace(/[^a-zA-Z0-9._\u4e00-\u9fff-]/g, "_");
-    const fileName = `${timestamp}_${safeName}`;
-    const filePath = join(UPLOAD_DIR, fileName);
-
-    const bytes = await file.arrayBuffer();
-    await writeFile(filePath, Buffer.from(bytes));
-
+    // 先创建项目获取 ID
     const project = await prisma.project.create({
       data: {
         name: file.name,
         source: "upload",
-        sourcePath: filePath,
+        sourcePath: "", // 稍后更新
         status: "pending",
       },
+    });
+
+    // 保存到 uploads/{project_id}/
+    const projectUploadDir = join(UPLOADS_DIR, project.id);
+    await mkdir(projectUploadDir, { recursive: true });
+
+    const safeName = file.name.replace(/[^a-zA-Z0-9._\u4e00-\u9fff-]/g, "_");
+    const filePath = join(projectUploadDir, safeName);
+
+    const bytes = await file.arrayBuffer();
+    await writeFile(filePath, Buffer.from(bytes));
+
+    // 更新 sourcePath
+    await prisma.project.update({
+      where: { id: project.id },
+      data: { sourcePath: filePath },
     });
 
     await processQueue.add("process", {

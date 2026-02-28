@@ -48,6 +48,7 @@ async function processJob(job: Job<ProcessJobData>): Promise<void> {
       body: JSON.stringify({
         video_path: videoPath,
         output_dir: outputDir ?? "",
+        project_id: projectId,
         min_duration: minDuration ?? 5.0,
         max_duration: maxDuration ?? 60.0,
         disable_motion: disableMotion ?? false,

@@ -19,26 +19,41 @@ def get_next_version_tag(output_base: Path) -> str:
     return f"v{max_n + 1}_{timestamp}"
 
 
-def create_version_dir(video_path: Path, output_dir: Path | None = None) -> Path:
+def create_version_dir(
+    video_path: Path,
+    output_dir: Path | None = None,
+    project_id: str | None = None,
+) -> Path:
     """创建版本目录，返回路径
 
+    优先级：
+    1. output_dir + project_id → {output_dir}/{project_id}/
+    2. output_dir 无 project_id → {output_dir}/deepcut_output/v{N}/
+    3. 无 output_dir → {video_parent}/deepcut_output/v{N}/
+
     目录结构：
-        {output_base}/
-        └── v{N}_{timestamp}/
-            ├── clips/
-            ├── metadata.json
-            └── transcript.json
+        {base}/
+        ├── clips/
+        ├── thumbnails/
+        ├── metadata.json
+        └── transcript.json
     """
-    if output_dir is not None:
-        output_base = output_dir / "deepcut_output"
+    if project_id is not None and output_dir is not None:
+        # Web 模式：统一存储目录，以 project_id 为子目录名
+        version_dir = output_dir / project_id
     else:
-        output_base = video_path.parent / "deepcut_output"
+        # CLI 模式：保留版本号目录
+        if output_dir is not None:
+            output_base = output_dir / "deepcut_output"
+        else:
+            output_base = video_path.parent / "deepcut_output"
 
-    output_base.mkdir(parents=True, exist_ok=True)
+        output_base.mkdir(parents=True, exist_ok=True)
+        version_tag = get_next_version_tag(output_base)
+        version_dir = output_base / version_tag
 
-    version_tag = get_next_version_tag(output_base)
-    version_dir = output_base / version_tag
     version_dir.mkdir(parents=True, exist_ok=True)
     (version_dir / "clips").mkdir(exist_ok=True)
+    (version_dir / "thumbnails").mkdir(exist_ok=True)
 
     return version_dir
