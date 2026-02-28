@@ -1,6 +1,8 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Film, Clock, Scissors, AlertCircle, Loader2, CheckCircle2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,28 +28,93 @@ const STATUS_CONFIG: Record<
   failed: { icon: <AlertCircle className="h-3 w-3" />, variant: "destructive" },
 };
 
+function formatElapsed(seconds: number): string {
+  if (seconds < 60) return `${Math.floor(seconds)}s`;
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}m${s}s`;
+}
+
 export function ProjectCard({
   id,
   name,
-  status,
-  totalClips,
-  elapsed,
+  status: initialStatus,
+  totalClips: initialClips,
+  elapsed: initialElapsed,
   createdAt,
   thumbnailUrl,
 }: ProjectCardProps) {
+  const router = useRouter();
+  const [status, setStatus] = useState<ProjectStatus>(initialStatus);
+  const [totalClips, setTotalClips] = useState(initialClips);
+  const [elapsed, setElapsed] = useState(initialElapsed);
+  const [elapsedLive, setElapsedLive] = useState(0);
+  const startTimeRef = useRef(Date.now());
+
+  // 实时轮询 pending/processing 状态
+  useEffect(() => {
+    if (status !== "pending" && status !== "processing") return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/projects/${id}/status`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setStatus(data.status);
+        setTotalClips(data.totalClips);
+        setElapsed(data.elapsed);
+
+        if (data.status === "completed" || data.status === "failed") {
+          clearInterval(interval);
+          // 刷新 Server Component 数据（缩略图等）
+          router.refresh();
+        }
+      } catch {
+        // 忽略轮询错误
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [id, status, router]);
+
+  // 实时计时器
+  useEffect(() => {
+    if (status !== "pending" && status !== "processing") return;
+    startTimeRef.current = Date.now();
+
+    const timer = setInterval(() => {
+      setElapsedLive(Math.floor((Date.now() - startTimeRef.current) / 1000));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [status]);
+
   const statusConf = STATUS_CONFIG[status];
+  const isActive = status === "pending" || status === "processing";
 
   return (
     <Link href={`/projects/${id}`}>
-      <Card className="group cursor-pointer overflow-hidden transition-shadow hover:shadow-md">
+      <Card className={`group cursor-pointer overflow-hidden transition-shadow hover:shadow-md ${
+        isActive ? "ring-2 ring-primary/20" : ""
+      }`}>
         {/* 缩略图区域 */}
         <div className="relative aspect-video bg-muted">
-          {thumbnailUrl ? (
+          {status === "completed" && thumbnailUrl ? (
             <img
               src={thumbnailUrl}
               alt={name}
               className="h-full w-full object-cover"
             />
+          ) : isActive ? (
+            <div className="flex h-full flex-col items-center justify-center gap-2">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-xs text-muted-foreground">
+                {status === "pending" ? "排队中..." : "正在切片..."}
+              </p>
+              <p className="text-xs font-mono text-muted-foreground/60">
+                {formatElapsed(elapsedLive)}
+              </p>
+            </div>
           ) : (
             <div className="flex h-full items-center justify-center">
               <Film className="h-10 w-10 text-muted-foreground/40" />
@@ -76,10 +143,13 @@ export function ProjectCard({
                 {elapsed != null && (
                   <span className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    {elapsed.toFixed(0)}s
+                    {formatElapsed(elapsed)}
                   </span>
                 )}
               </>
+            )}
+            {status === "failed" && (
+              <span className="text-destructive">处理失败</span>
             )}
             <span className="ml-auto">
               {new Date(createdAt).toLocaleDateString("zh-CN", {

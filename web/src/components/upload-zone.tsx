@@ -1,19 +1,19 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Upload, Film, FolderOpen, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 
-interface UploadZoneProps {
-  onUploadComplete?: () => void;
-}
-
-export function UploadZone({ onUploadComplete }: UploadZoneProps) {
+export function UploadZone() {
+  const router = useRouter();
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [localPath, setLocalPath] = useState("");
   const [submittingPath, setSubmittingPath] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -59,25 +59,36 @@ export function UploadZone({ onUploadComplete }: UploadZoneProps) {
     }
 
     setUploading(true);
+    setUploadProgress(0);
     setMessage(null);
 
     try {
+      // 模拟上传进度（fetch 不支持 upload progress, 用定时器模拟）
+      const progressTimer = setInterval(() => {
+        setUploadProgress((prev) => Math.min(prev + 8, 90));
+      }, 200);
+
       const formData = new FormData();
       formData.append("file", file);
 
       const res = await fetch("/api/upload", { method: "POST", body: formData });
+      clearInterval(progressTimer);
+      setUploadProgress(100);
+
       const data = await res.json();
 
       if (!res.ok) {
         setMessage({ type: "error", text: data.error || "上传失败" });
       } else {
-        setMessage({ type: "success", text: `${file.name} 已提交处理` });
-        onUploadComplete?.();
+        setMessage({ type: "success", text: `${file.name} 已提交处理，正在切片中...` });
+        // 刷新 Server Component 数据让项目卡片出现
+        router.refresh();
       }
     } catch {
       setMessage({ type: "error", text: "网络错误" });
     } finally {
       setUploading(false);
+      setTimeout(() => setUploadProgress(0), 500);
     }
   }
 
@@ -97,9 +108,9 @@ export function UploadZone({ onUploadComplete }: UploadZoneProps) {
       if (!res.ok) {
         setMessage({ type: "error", text: data.error || "提交失败" });
       } else {
-        setMessage({ type: "success", text: `已提交处理: ${localPath.split("/").pop()}` });
+        setMessage({ type: "success", text: `${localPath.split("/").pop()} 已提交处理，正在切片中...` });
         setLocalPath("");
-        onUploadComplete?.();
+        router.refresh();
       }
     } catch {
       setMessage({ type: "error", text: "网络错误" });
@@ -135,28 +146,33 @@ export function UploadZone({ onUploadComplete }: UploadZoneProps) {
               onDrop={handleDrop}
             >
               {uploading ? (
-                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                <div className="flex flex-col items-center w-full max-w-xs">
+                  <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                  <p className="mt-3 text-sm text-muted-foreground">上传中...</p>
+                  <Progress value={uploadProgress} className="mt-3 w-full" />
+                  <p className="mt-1 text-xs text-muted-foreground/60">{uploadProgress}%</p>
+                </div>
               ) : (
-                <Film className="h-10 w-10 text-muted-foreground" />
-              )}
-              <p className="mt-3 text-sm text-muted-foreground">
-                {uploading ? "上传中..." : "拖拽视频文件到这里，或点击选择"}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground/60">
-                支持 MP4/MKV/AVI/MOV，最大 500MB
-              </p>
-              {!uploading && (
-                <label className="mt-4 cursor-pointer">
-                  <Button variant="outline" size="sm" asChild>
-                    <span>选择文件</span>
-                  </Button>
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept="video/*"
-                    onChange={handleFileSelect}
-                  />
-                </label>
+                <>
+                  <Film className="h-10 w-10 text-muted-foreground" />
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    拖拽视频文件到这里，或点击选择
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground/60">
+                    支持 MP4/MKV/AVI/MOV，最大 500MB
+                  </p>
+                  <label className="mt-4 cursor-pointer">
+                    <Button variant="outline" size="sm" asChild>
+                      <span>选择文件</span>
+                    </Button>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="video/*"
+                      onChange={handleFileSelect}
+                    />
+                  </label>
+                </>
               )}
             </div>
           </TabsContent>
