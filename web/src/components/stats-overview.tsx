@@ -95,8 +95,8 @@ export function StatsOverview() {
                 key={i}
                 className="flex-1 rounded-t-sm bg-primary/80 transition-all group-hover:bg-primary"
                 style={{
-                  height: `${height}%`,
-                  opacity: stat.value === 0 ? 0.2 : 0.6 + (i / stat.bars.length) * 0.4,
+                  height: `${height.toFixed(2)}%`,
+                  opacity: stat.value === 0 ? 0.2 : 0.8,
                 }}
               />
             ))}
